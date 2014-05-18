@@ -9,10 +9,10 @@ var mysql    = require('mysql');
 var fs       = require('fs');
 
 var connection  = mysql.createConnection({
-    host : '23.226.233.30', // dev db 64.206.169.178
-    user : 'nothLogger',
-    password : 'Password1!',
-    database : 'noth_logging'
+    host : ''
+    user : '',
+    password : '',
+    database : ''
 });
 
 //express stuff
