@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" ng-app="myApp">
+<head>
+    <meta charset="utf-8">
+    <title>admin dashboard</title>
+    <link rel="stylesheet" href="css/app.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css">
+<style>
+    circle,
+    path {
+      cursor: pointer;
+    }
+    path{
+        fill-rule: evenodd;
+    }
+    circle {
+      fill: none;
+      pointer-events: all;
+    }
+    text{
+        color:white;
+        z-index:5000;
+    }
+    svg{
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+    <div class="container" style="float:right; width: 20%;" ng-controller="POCController">
+        <table>
+            <thead>
+                <tr>
+                    <th>User Type</th>
+                    <th># of Logins</th>
+                </tr>
+                <tbody>
+                    <tr ng-repeat="item in authByUser">
+                    <td>{{item.InitiatorType}}</td>
+                    <td>{{item.thecount}}</td>
+                </tbody>
+        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Action Name</th>
+                    <th>Action Count</th>
+                </tr>
+                <tbody>
+                    <tr ng-repeat="item in todayUsage | limitTo: 10">
+                    <td>{{item.EventName}}</td>
+                    <td>{{item.thecount}}</td>
+                </tbody>
+        </table>
+    </div>
+
+<script src="lib/angular/angular.js"></script>
+<script src="js/app.js"></script>
+<script src="js/services.js"></script>
+<script src="js/controllers.js"></script>
+<script src="js/filters.js"></script>
+<script src="js/directives.js"></script>
+<script src="js/angui.js"></script>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+
+var width = window.innerWidth * .8,
+    height = window.innerHeight,
+    radius = Math.min(width, height) / 2,
+    clickStatus = 0;
+
+var x = d3.scale.linear()
+    .range([0, 2 * Math.PI]);
+
+var y = d3.scale.linear()
+    .range([0, radius]);
+
+var color = d3.scale.category20c();
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")");
+
+var partition = d3.layout.partition()
+    .value(function(d) {  return d.size; });
+
+var arc = d3.svg.arc()
+    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
+    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+
+d3.json("/getData", function(error, root) {
+  var g = svg.selectAll("g")
+      .data(partition.nodes(root))
+    .enter().append("g");
+
+  var path = g.append("path")
+    .attr("d", arc)
+    .style("fill", function(d) { if(d.dx > .008){return color(d.name)}else{return '#fff'}; })
+    .on("click", click);
+  var text = g.append("text")
+    .attr("transform", function(d) { return "rotate(" + computeTextRotation(d) + ")"; })
+    .attr("x", function(d) { return y(d.y); })
+    .attr("dx", "6") // margin
+    .attr("dy", ".35em") // vertical-align
+    .text(function(d) {return d.name + " " + d.value}).attr('display', function(d){
+        if(d.dx > .008){
+            return 'block';
+        }else{
+            return 'none';
+        }
+    });
+
+  function click(d) {
+    console.log(d);
+    if(d.depth !== 2){
+        return;
+    }else{
+        // fade out all text elements
+        text.transition().attr("opacity", 0);
+        path.transition()
+          .duration(750)
+          .attrTween("d", arcTween(d))
+          .each("end", function(e, i) {
+              // check if the animated element's data e lies within the visible angle span given in d
+              if (e.x >= d.x && e.x < (d.x + d.dx)) {
+                // get a selection of the associated text element
+                var arcText = d3.select(this.parentNode).select("text").attr('display', function(i, e, d){
+                    if(i.dx > .008 ){
+                        return 'block';
+                    }else{
+                        return 'none';
+                    }
+                });
+                // fade in the text element and recalculate positions
+                arcText.transition().duration(750)
+                  .attr("opacity", 1)
+                  .attr("transform", function() { return "rotate(" + computeTextRotation(e) + ")" })
+                  .attr("x", function(d) { return y(d.y); });
+              }
+          });
+      }
+  }
+});
+
+d3.select(self.frameElement).style("height", height + "px");
+
+// Interpolate the scales!
+function arcTween(d) {
+  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+      yd = d3.interpolate(y.domain(), [d.y, 1]),
+      yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+  return function(d, i) {
+    return i
+        ? function(t) { return arc(d); }
+        : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+  };
+}
+
+function computeTextRotation(d) {
+  return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
+}
+</script>
+</body>
+</html>
