@@ -66,10 +66,10 @@ app.get('/getData', function(req, res){
 
 connection.on('error', function() {
     connection  = mysql.createConnection({
-        host : '64.206.169.178', //23.226.233.30
-        user : 'nothLogger',
-        password : 'Password1!',
-        database : 'noth_logging'
+        host : 'xxxxx', //23.226.233.30
+        user : 'xxxxx',
+        password : 'xxxxx',
+        database : 'xxxxx'
     });
 });
 
