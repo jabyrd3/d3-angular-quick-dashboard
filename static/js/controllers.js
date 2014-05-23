@@ -8,10 +8,10 @@ app.config(function($locationProvider) {
 });
 
 app.controller('POCController', function($scope, $rootScope, $http, data) {
-    var nonjuitsu = data.getAuthByUser({}, function(response){
+    var authPromise = data.getAuthByUser({}, function(response){
         $scope.authByUser = response;    
     }, function(){});
-    var dongjitsu = data.getTodayUsageStats({}, function(response){
+    var usagePromise = data.getTodayUsageStats({}, function(response){
         $scope.todayUsage = response;
         console.log(response);
     }, function(){});
